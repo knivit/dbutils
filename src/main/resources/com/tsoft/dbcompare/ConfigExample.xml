@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans
+    xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean id="oracleDataSource" class="oracle.jdbc.pool.OracleDataSource" destroy-method="close">
+        <property name="URL" value="jdbc:oracle:thin:@//<host>:1521/<instance>"/>
+        <property name="user" value="<login>"/>
+        <property name="password" value="<password>r"/>
+    </bean>
+
+    <bean id="postgresDataSource" class="org.postgresql.ds.PGPoolingDataSource" destroy-method="close">
+        <property name="serverName" value="<host>"/>
+        <property name="databaseName" value="<database>"/>
+        <property name="user" value="<login>r"/>
+        <property name="password" value="<password>"/>
+    </bean>
+
+    <bean id="sourceConnectionBean" class="com.tsoft.dbcompare.config.ConnectionConfig">
+        <constructor-arg name="dataSource" ref="oracleDataSource"/>
+        <constructor-arg name="databaseType" value="ORACLE"/>
+        <property name="schemaName" value="<schema>"/>
+    </bean>
+
+    <bean id="destinationConnectionBean" class="com.tsoft.dbcompare.config.ConnectionConfig">
+        <constructor-arg name="dataSource" ref="postgresDataSource"/>
+        <constructor-arg name="databaseType" value="POSTGRES"/>
+        <property name="schemaName" value="<schema>"/>
+    </bean>
+
+    <bean class="com.tsoft.dbcompare.config.CompareConfig">
+        <property name="sourceConnectionConfig" ref="sourceConnectionBean"/>
+        <property name="destinationConnectionConfig" ref="destinationConnectionBean"/>
+
+        <property name="tableConfigList">
+            <list>
+                <bean class="com.tsoft.dbcompare.config.TableConfig">
+                    <constructor-arg name="name" value="<table>"/>
+                    <!-- Possible values are:
+                                            DDL - do only tables' metadata comparision
+                                            COUNT - for tables' rows count
+                                            HASH - for NUMBER fields check MIN, MAX, SUM; for DATE fields - MIN, MAX
+                                        -->
+                    <constructor-arg name="compareMode" value="COUNT"/>
+                    <property name="whereClause" value="1=1"/>
+
+                    <!--
+                                             If this property is set to false (default) then if DDL check failed
+                                             then other checks (COUNT, HASH) will be skipped;
+                                             if DDL check passed but COUNT doesn't then HASH will be skipped.
+
+                                             In case this is set to true, then all checks are to be checked.
+                                         -->
+                    <property name="forcedCompare" value="true"/>
+                </bean>
+
+                <bean class="com.tsoft.dbcompare.config.TableConfig">
+                    <constructor-arg name="name" value="<table>"/>
+                    <constructor-arg name="compareMode" value="HASH"/>
+                    <property name="whereClause" value="1=1"/>
+                </bean>
+            </list>
+        </property>
+    </bean>
+ </beans>
